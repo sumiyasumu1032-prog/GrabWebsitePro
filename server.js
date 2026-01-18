@@ -40,14 +40,33 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const app = express();
 
 // ================================
-//        CORS
+//        CORS (UPDATED)
 // ================================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://socialmallexpress.com",
+  "https://www.socialmallexpress.com",
+];
+
+// Preflight handling (VERY IMPORTANT for POST login)
+app.options("*", cors());
+
+// Main CORS middleware
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // mobile apps, curl etc allow
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.log("❌ CORS blocked:", origin);
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
+
 
 // ================================
 //        BODY PARSER
