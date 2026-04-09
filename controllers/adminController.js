@@ -6,52 +6,71 @@ const WithdrawRequest = require("../models/WithdrawRequest");
    ✅ EXISTING FUNCTION (UNCHANGED – AS YOU SAID)
 ====================================================== */
 exports.setDepositWallet = async (req, res) => {
-    try {
-      const { username, address } = req.body;
-  
-      if (!username || !address) {
-        return res.status(400).json({
-          success: false,
-          message: "Username and address required"
-        });
-      }
-  
-      // 🔥 FIX HERE
-      const user = await User.findOne({
-        $or: [
-          { nickname: username },
-          { phone: username }
-        ]
-      });
-  
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found"
-        });
-      }
-  
-      user.depositWallet.address = address;
-      user.depositWallet.network = "TRC20";
-  
-      // optional sync
-      
-  
-      await user.save();
-  
-      res.json({
-        success: true,
-        message: "Deposit address updated"
-      });
-    } catch (err) {
-      console.error("setDepositWallet error:", err);
-      res.status(500).json({
+  try {
+    const { username, bep20, trc20, bank } = req.body;
+
+    if (!username) {
+      return res.status(400).json({
         success: false,
-        message: "Server error"
+        message: "Username required"
       });
     }
-  };
-  
+
+    // 🔥 FIX HERE
+    const user = await User.findOne({
+      $or: [
+        { nickname: username },
+        { phone: username }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // ✅ ensure structure exists
+    if (!user.depositWallets) {
+      user.depositWallets = {
+        bep20: { address: "" },
+        trc20: { address: "" },
+        bank: { accountNumber: "" }
+      };
+    }
+
+    // ✅ ONLY UPDATE WHAT COMES
+    if (bep20 !== undefined) {
+      user.depositWallets.bep20.address = bep20;
+    }
+
+    if (trc20 !== undefined) {
+      user.depositWallets.trc20.address = trc20;
+    }
+
+    if (bank !== undefined) {
+      user.depositWallets.bank.accountNumber = bank;
+    }
+
+    // optional sync
+
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Deposit address updated"
+    });
+  } catch (err) {
+    console.error("setDepositWallet error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
+
 
 /* ======================================================
    📊 DASHBOARD STATS
@@ -111,7 +130,7 @@ exports.approveDeposit = async (req, res) => {
   await User.findByIdAndUpdate(deposit.user, {
     $inc: { totalBalance: deposit.amount }
   });
-  
+
 
   res.json({ success: true });
 };
@@ -144,7 +163,7 @@ exports.approveWithdraw = async (req, res) => {
   await User.findByIdAndUpdate(withdraw.user, {
     $inc: { totalBalance: -withdraw.amount }
   });
-  
+
 
   res.json({ success: true });
 };
@@ -160,39 +179,39 @@ exports.rejectWithdraw = async (req, res) => {
    🧮 UPDATE USER BALANCE (ADMIN)
 ====================================================== */
 exports.updateBalance = async (req, res) => {
-    const { username, amount } = req.body;
-  
-    if (!username || amount === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: "Username and amount required"
-      });
-    }
-  
-    // IMPORTANT FIX 👇
-    const user = await User.findOne({
-      $or: [
-        { nickname: username },
-        { phone: username }
-      ]
+  const { username, amount } = req.body;
+
+  if (!username || amount === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "Username and amount required"
     });
-  
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-  
-    user.totalBalance += Number(amount);
-    await user.save();
-  
-    res.json({
-      success: true,
-      message: "Balance updated successfully"
+  }
+
+  // IMPORTANT FIX 👇
+  const user = await User.findOne({
+    $or: [
+      { nickname: username },
+      { phone: username }
+    ]
+  });
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found"
     });
-  };
-  
+  }
+
+  user.totalBalance += Number(amount);
+  await user.save();
+
+  res.json({
+    success: true,
+    message: "Balance updated successfully"
+  });
+};
+
 
 /* ======================================================
    🔍 SEARCH USERS
