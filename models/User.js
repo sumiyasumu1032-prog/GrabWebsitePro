@@ -64,14 +64,15 @@ const UserSchema = new mongoose.Schema(
     },
 
     /* ================= DEPOSIT WALLET (ADMIN CONTROL) ================= */
-    depositWallet: {
-      address: {
-        type: String,
-        default: ""
+    depositWallets: {
+      bep20: {
+        address: { type: String, default: "" }
       },
-      network: {
-        type: String,
-        default: "TRC20"
+      trc20: {
+        address: { type: String, default: "" }
+      },
+      bank: {
+        accountNumber: { type: String, default: "" }
       }
     }
   },
