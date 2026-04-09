@@ -11,7 +11,9 @@ const {
   getAllDeposits,
   approveDeposit,
   rejectDeposit,
-  getDepositAddress
+  getBep20Address,
+  getTrc20Address,
+  getBankAccount
 } = require("../controllers/depositController");
 
 // =====================================================
@@ -27,7 +29,15 @@ router.get("/all", auth, admin, getAllDeposits);
 // =====================================================
 // USER → Get own deposit address
 // =====================================================
-router.get("/address", auth, getDepositAddress);
+// BEP20
+router.get("/address", auth, getBep20Address);
+
+// TRC20
+router.get("/trc20-address", auth, getTrc20Address);
+
+// BANK
+router.get("/bank-account", auth, 
+);
 
 // =====================================================
 // ADMIN → Approve deposit
