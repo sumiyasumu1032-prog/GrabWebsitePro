@@ -19,14 +19,17 @@ const DepositRequestSchema = new Schema(
     },
 
     // Blockchain network (fixed in UI)
+    walletAddress: {
+      type: String
+    },
+    
+    accountNumber: {
+      type: String
+    },
+    
     network: {
       type: String,
-      default: "TRC20"
-    },
-
-    // Wallet address shown in deposit.tsx
-    walletAddress: {
-      type: String,
+      enum: ["BSC (BEP20)", "TRC20", "Bank Account"],
       required: true
     },
 
