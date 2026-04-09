@@ -6,42 +6,47 @@ const User = require("../models/User");
 // ==============================
 exports.requestDeposit = async (req, res) => {
   try {
-    const { amount, network, walletAddress, invitationCode } = req.body;
+    const { amount, network, walletAddress, accountNumber, invitationCode } = req.body;
 
     if (!amount || amount < 20) {
       return res.status(400).json({
         success: false,
-        message: "Minimum deposit amount is 20 USDT"
+        message: "Minimum deposit amount is 20"
       });
     }
 
-    if (!walletAddress || !invitationCode) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields"
-      });
-    }
-
-    const deposit = await DepositRequest.create({
+    let data = {
       user: req.user.id,
       amount,
-      network: network || "TRC20",
-      walletAddress,
+      network,
       invitationCode
-    });
+    };
 
-    return res.status(201).json({
+    // 🔥 NETWORK LOGIC
+    if (network === "BSC (BEP20)" || network === "TRC20") {
+      if (!walletAddress) {
+        return res.status(400).json({ success: false, message: "Wallet address required" });
+      }
+      data.walletAddress = walletAddress;
+    }
+
+    if (network === "Bank Account") {
+      if (!accountNumber) {
+        return res.status(400).json({ success: false, message: "Account number required" });
+      }
+      data.accountNumber = accountNumber;
+    }
+
+    const deposit = await DepositRequest.create(data);
+
+    return res.json({
       success: true,
-      message: "Deposit request submitted successfully",
       deposit
     });
 
   } catch (error) {
-    console.error("Deposit request error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 
@@ -51,7 +56,7 @@ exports.requestDeposit = async (req, res) => {
 exports.getAllDeposits = async (req, res) => {
   try {
     const deposits = await DepositRequest.find()
-      .populate("user", "username invitationCode")
+    .populate("user", "nickname invitationCode")
       .sort({ createdAt: -1 });
 
     return res.json({
@@ -124,26 +129,38 @@ exports.rejectDeposit = async (req, res) => {
   }
 };
 
-// USER: apna deposit address laane ke liye
-exports.getDepositAddress = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
+// ==============================
+// GET BEP20 ADDRESS
+// ==============================
+exports.getBep20Address = async (req, res) => {
+  const user = await User.findById(req.user.id);
 
-    if (!user || !user.depositWallet?.address) {
-      return res.json({
-        success: false,
-        message: "Deposit address not assigned"
-      });
-    }
+  res.json({
+    success: true,
+    address: user.depositWallets?.bep20?.address || ""
+  });
+};
 
-    res.json({
-      success: true,
-      address: user.depositWallet.address,
-      network: user.depositWallet.network
-    });
+// ==============================
+// GET TRC20 ADDRESS
+// ==============================
+exports.getTrc20Address = async (req, res) => {
+  const user = await User.findById(req.user.id);
 
-  } catch (err) {
-    console.error("getDepositAddress error:", err);
-    res.status(500).json({ success: false });
-  }
+  res.json({
+    success: true,
+    address: user.depositWallets?.trc20?.address || ""
+  });
+};
+
+// ==============================
+// GET BANK ACCOUNT
+// ==============================
+exports.getBankAccount = async (req, res) => {
+  const user = await User.findById(req.user.id);
+
+  res.json({
+    success: true,
+    accountNumber: user.depositWallets?.bank?.accountNumber || ""
+  });
 };
