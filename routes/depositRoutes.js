@@ -36,8 +36,7 @@ router.get("/address", auth, getBep20Address);
 router.get("/trc20-address", auth, getTrc20Address);
 
 // BANK
-router.get("/bank-account", auth, 
-);
+router.get("/bank-account", auth, getBankAccount);
 
 // =====================================================
 // ADMIN → Approve deposit
