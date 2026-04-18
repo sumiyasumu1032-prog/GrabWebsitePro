@@ -15,7 +15,10 @@ exports.requestWithdraw = async (req, res) => {
   try {
     const {
       amount,
+      walletType,
       walletAddress,
+      walletName,
+      holderName,
       network,
       invitationCode,
       withdrawPassword
@@ -30,10 +33,11 @@ exports.requestWithdraw = async (req, res) => {
         .json({ success: false, message: "Invalid amount" });
     }
 
-    if (!walletAddress || !network) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Wallet details required" });
+    if (!walletType || !walletAddress || !network) {
+      return res.status(400).json({
+        success: false,
+        message: "Withdraw wallet details required"
+      });
     }
 
     if (!withdrawPassword) {
@@ -69,10 +73,16 @@ exports.requestWithdraw = async (req, res) => {
     const withdrawRequest = await WithdrawRequest.create({
       user: userId,
       amount: Number(amount),
+    
+      walletType,
+      walletName,
+      holderName,
+    
       walletAddress,
       network,
       invitationCode,
-      status: "pending",
+    
+      status: "pending"
     });
 
     return res.status(201).json({
