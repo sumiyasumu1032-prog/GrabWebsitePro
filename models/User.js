@@ -47,8 +47,23 @@ const UserSchema = new mongoose.Schema(
 
     /* ================= USER WALLET ================= */
     wallet: {
-      platform: { type: String, default: "" },
-      address: { type: String, default: "" }
+      bep20: {
+        walletName:String,
+        holderName:String,
+        address:String
+      },
+    
+      trc20: {
+        walletName:String,
+        holderName:String,
+        address:String
+      },
+    
+      bank: {
+        walletName:String,
+        holderName:String,
+        accountNumber:String
+      }
     },
 
     /* ================= ADMIN FLAGS ================= */
