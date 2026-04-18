@@ -192,16 +192,32 @@ exports.getMyProfile = async (req, res) => {
 // =============================
 exports.saveWallet = async (req, res) => {
   try {
-    const { address, platform } = req.body;
+    const { type, address, walletName, holderName } = req.body;
 
-    if (!address || !platform) {
+    // ===============================
+    // Validate Input
+    // ===============================
+    if (!type || !address) {
       return res.status(400).json({
         success: false,
-        message: "Wallet address & platform required"
+        message: "Wallet type and address are required"
       });
     }
 
+    const allowedTypes = ["BEP20", "TRC20", "BANK"];
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid wallet type"
+      });
+    }
+
+    // ===============================
+    // Find User
+    // ===============================
     const user = await User.findById(req.user.id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -209,23 +225,60 @@ exports.saveWallet = async (req, res) => {
       });
     }
 
-    // ✅ Correct nested update
-    user.wallet.address = address;
-    user.wallet.platform = platform;
+    // ===============================
+    // Ensure wallet object exists
+    // ===============================
+    if (!user.wallet) {
+      user.wallet = {};
+    }
+
+    // ===============================
+    // Save Without Deleting Old Data
+    // ===============================
+    if (type === "BEP20") {
+      user.wallet.bep20 = {
+        walletName: walletName || "",
+        holderName: holderName || "",
+        address: address.trim()
+      };
+    }
+
+    if (type === "TRC20") {
+      user.wallet.trc20 = {
+        walletName: walletName || "",
+        holderName: holderName || "",
+        address: address.trim()
+      };
+    }
+
+    if (type === "BANK") {
+      user.wallet.bank = {
+        walletName: walletName || "",
+        holderName: holderName || "",
+        accountNumber: address.trim()
+      };
+    }
+
+    // Important for nested update
+    user.markModified("wallet");
 
     await user.save();
 
-    res.json({
+    // ===============================
+    // Response
+    // ===============================
+    return res.status(200).json({
       success: true,
-      message: "Wallet saved successfully",
+      message: `${type} wallet saved successfully`,
       wallet: user.wallet
     });
 
   } catch (error) {
     console.error("Save wallet error:", error);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error while saving wallet"
     });
   }
 };
